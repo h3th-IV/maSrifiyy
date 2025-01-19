@@ -43,6 +43,7 @@ func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/acct", makeHTTPHandleFunc(s.handleAcct))
+	router.HandleFunc("/get-acct/{id}", makeHTTPHandleFunc(s.handleGetAcct))
 	log.Println("json http server running on port :3000")
 	http.ListenAndServe(s.listenAddr, router)
 }
@@ -61,7 +62,9 @@ func (s *APIServer) handleAcct(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) handleGetAcct(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	id := mux.Vars(r)["id"]
+	fmt.Println(id)
+	return writeJSON(w, http.StatusOK, &account{})
 }
 
 func (s *APIServer) handleCreateAcct(w http.ResponseWriter, r *http.Request) error {
