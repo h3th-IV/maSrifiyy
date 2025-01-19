@@ -1,7 +1,7 @@
 build:
 	@go build -o bin/maSrifiyy
 
-run:
+run: build
 	@./bin/maSrifiyy
 
 test:

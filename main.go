@@ -1,7 +1,6 @@
 package main
 
-import "fmt"
-
 func main() {
-	fmt.Println("!rothschild owned")
+	server := NewAPIServer(":3000")
+	server.Run()
 }
