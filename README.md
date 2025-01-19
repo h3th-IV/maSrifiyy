@@ -1,6 +1,6 @@
-# 🏦 maSrifiyy - Your Minimalist JSON Bank App
+# 🏦 maSrifiyy - JSON Bank App
 
-**maSrifiyy** (مصرفيّ), meaning *"my bank"* in Arabic, is a lightweight and developer-friendly banking app built in **Go**. It offers essential features for managing accounts and transactions using a simple JSON structure. Whether you're building a financial prototype or experimenting with Go, **maSrifiyy** is here to simplify your banking needs.
+**maSrifiyy** (مصرفيّ),is a lightweight and developer-friendly banking app built in **Go**. It offers essential features for managing accounts and transactions using a simple JSON structure. Whether you're building a financial prototype or experimenting with Go, **maSrifiyy** is here to simplify your banking needs.
 
 ---
 
