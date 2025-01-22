@@ -4,17 +4,24 @@ import (
 	"time"
 )
 
-type User struct {
-	ID        int       `gorm:"primaryKey;autoIncrement;unique" json:"id"`
-	FirstName string    `gorm:"size:256;not null" json:"first_name"`
-	LastName  string    `gorm:"size:256;not null" json:"last_name"`
-	Email     string    `gorm:"unique;not null" json:"email"`
-	Password  string    `gorm:"size:256;not null" json:"password"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+type Sellers struct {
+	ID        int       `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-func NewUser(firstName, lastName, email, password string) *User {
-	return &User{
+type CreateAccount struct {
+	FirstName string `json:"first_name"`
+	LAstName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
+func NewUser(firstName, lastName, email, password string) *Sellers {
+	return &Sellers{
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,

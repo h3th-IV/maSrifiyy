@@ -55,18 +55,26 @@ func (s *APIServer) handleAcct(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) handleGetAcct(w http.ResponseWriter, r *http.Request) error {
-	return writeJSON(w, http.StatusOK, &models.User{})
+	return writeJSON(w, http.StatusOK, &models.Sellers{})
 }
 
 func (s *APIServer) handleCreateAcct(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	acctReq := new(models.CreateAccount)
+	if err := json.NewDecoder(r.Body).Decode(acctReq); err != nil {
+
+	}
+	newAcct := models.NewUser(acctReq.FirstName, acctReq.LAstName, acctReq.Email, acctReq.Password)
+	if _, err := s.Storage.CreateUserAccount(newAcct); err != nil {
+		return err
+	}
+	return writeJSON(w, http.StatusOK, newAcct)
 }
 
 func (s *APIServer) handleDeleteAcct(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
+func (s *APIServer) handleAddItemToInventory(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
