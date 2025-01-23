@@ -25,3 +25,6 @@
 1. Clone the repository:
    ```bash
    git clone https://github.com/h3th-IV/maSrifiyy.git
+
+2. use "make run" to build and run
+3. Postman docs here: https://lively-equinox-394776.postman.co/workspace/bool-sh%2Fh3th~61c0e8fb-40e4-4fc3-8ab6-03909f43985c/collection/36603347-3c07fb80-0d79-49f5-9d25-23e80751e48e?action=share&source=copy-link&creator=36603347

@@ -14,6 +14,8 @@ func main() {
 		log.Fatalf("Error creating database %v", err)
 	}
 	fmt.Printf("store mem:%+v\n", store)
+	store.CreateSellersTable()
+	store.CreateGoodsTable()
 	server := api.NewAPIServer(":3000", store)
 	server.Run()
 }
