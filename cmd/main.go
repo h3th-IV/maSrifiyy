@@ -6,6 +6,7 @@ import (
 
 	"github.com/maSrifiyy/api"
 	"github.com/maSrifiyy/db"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -13,9 +14,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating database %v", err)
 	}
-	fmt.Printf("store mem:%+v\n", store)
+	croner := cron.New()
+	croner.AddFunc("0 8 * * *", func() {
+		err := store.SentThresholdNotification()
+		if err != nil {
+			log.Printf("Error running threshold notification: %v", err)
+		}
+	})
+	fmt.Printf("store mem: %+v\n", store)
+
+	//init db tables
 	store.CreateSellersTable()
 	store.CreateGoodsTable()
+	//start server
 	server := api.NewAPIServer(":3000", store)
+	log.Println("Cron job scheduler started.")
+	go croner.Start()
 	server.Run()
 }

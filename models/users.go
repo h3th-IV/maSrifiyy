@@ -28,6 +28,12 @@ type Login struct {
 	Password string `json:"password"`
 }
 
+type ItemUser struct {
+	Goods
+	FirstName string
+	Email     string
+}
+
 func NewUser(firstName, lastName, email, password string) *Sellers {
 	return &Sellers{
 		UserID:    "usr" + uuid.NewString(),

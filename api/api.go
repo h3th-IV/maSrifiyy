@@ -44,20 +44,14 @@ func (s *APIServer) Run() {
 	router.HandleFunc("/login", makeHTTPHandleFunc(s.Login))
 	router.HandleFunc("/add-item", makeHTTPHandleFunc(s.handleAddItemToInventory))
 	router.HandleFunc("/update-inventory", makeHTTPHandleFunc(s.updateItem))
+	router.HandleFunc("/get-items", makeHTTPHandleFunc(s.GetAllItems))
+	router.HandleFunc("/get-product/{productId}", makeHTTPHandleFunc(s.GetItemByProductID))
+
 	log.Println("json http server running on port :3000")
 	http.ListenAndServe(s.listenAddr, router)
 }
 
 func (s *APIServer) handleAcct(w http.ResponseWriter, r *http.Request) error {
-	// if r.Method == "GET" {
-	// 	return s.handleGetAcct(w, r)
-	// }
-	// if r.Method == "POST" {
-	// 	return s.handleCreateAcct(w, r)
-	// }
-	// if r.Method == "DELETE" {
-	// 	return s.updateItem(w, r)
-	// }
 	return fmt.Errorf("method not allowed %s", r.Method)
 }
 
@@ -66,6 +60,9 @@ func (s *APIServer) handleGetAcct(w http.ResponseWriter, r *http.Request) error 
 }
 
 func (s *APIServer) handleCreateAcct(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		return fmt.Errorf("Method not allowed")
+	}
 	acctReq := new(models.CreateAccount)
 	if err := json.NewDecoder(r.Body).Decode(acctReq); err != nil {
 
@@ -232,6 +229,32 @@ func (s *APIServer) updateItem(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return writeJSON(w, http.StatusOK, map[string]string{"message": "inventory updated successfully"})
+}
+
+// no auth for my reason
+func (s *APIServer) GetAllItems(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return fmt.Errorf("Method not allowed")
+	}
+	items, err := s.Storage.GetAllItem()
+	if err != nil {
+		return err
+	}
+	res := map[string]interface{}{}
+	res["message"] = "All items retunred"
+	res["items"] = items
+	return writeJSON(w, http.StatusOK, res)
+}
+
+func (s *APIServer) GetItemByProductID(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	productId := vars["productId"]
+	item, err := s.Storage.GetItemByProductID(productId)
+	if err != nil {
+		log.Printf("err getting product: %v", err)
+		return err
+	}
+	return writeJSON(w, http.StatusOK, item)
 }
 
 type APIFunc func(http.ResponseWriter, *http.Request) error
