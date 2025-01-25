@@ -33,7 +33,7 @@ type Storage interface {
 }
 
 type PostgresStore struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 func NewPostgreStore() (*PostgresStore, error) {
@@ -49,7 +49,7 @@ func NewPostgreStore() (*PostgresStore, error) {
 	}
 
 	return &PostgresStore{
-		db: db,
+		DB: db,
 	}, nil
 }
 
@@ -64,7 +64,7 @@ func (s *PostgresStore) CreateSellersTable() error {
 		password VARCHAR(255) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
-	_, err := s.db.Exec(query)
+	_, err := s.DB.Exec(query)
 	if err != nil {
 		log.Printf("Error creating sellers table: %v", err)
 		return err
@@ -84,7 +84,7 @@ func (s *PostgresStore) CreateGoodsTable() error {
 		min_threshold INT NOT NULL,
 		created_by INT REFERENCES sellers(id) ON DELETE CASCADE
 	);`
-	_, err := s.db.Exec(query)
+	_, err := s.DB.Exec(query)
 	if err != nil {
 		log.Printf("Error creating goods table: %v", err)
 		return err
@@ -95,7 +95,7 @@ func (s *PostgresStore) CreateGoodsTable() error {
 
 func (s *PostgresStore) DropSellersTable() error {
 	query := `DROP TABLE IF EXISTS sellers;`
-	_, err := s.db.Exec(query)
+	_, err := s.DB.Exec(query)
 	if err != nil {
 		log.Printf("Error dropping sellers table: %v", err)
 		return err
@@ -106,7 +106,7 @@ func (s *PostgresStore) DropSellersTable() error {
 
 func (s *PostgresStore) DropGoodsTable() error {
 	query := `DROP TABLE IF EXISTS goods;`
-	_, err := s.db.Exec(query)
+	_, err := s.DB.Exec(query)
 	if err != nil {
 		log.Printf("Error dropping goods table: %v", err)
 		return err
@@ -119,7 +119,7 @@ func (s *PostgresStore) CreateUserAccount(user *models.Sellers) (bool, error) {
 	query := `INSERT INTO sellers (user_id, first_name, last_name, email, password, created_at)
 	VALUES ($1, $2, $3, $4, $5, NOW())`
 	createUser := models.NewUser(user.FirstName, user.LastName, user.Email, user.Password)
-	result, err := s.db.Exec(query, createUser.UserID, createUser.FirstName, createUser.LastName, createUser.Email, createUser.Password)
+	result, err := s.DB.Exec(query, createUser.UserID, createUser.FirstName, createUser.LastName, createUser.Email, createUser.Password)
 	if err != nil {
 		log.Printf("Error creating user account: %v", err)
 		if strings.Contains(err.Error(), "sellers_email_key") {
@@ -142,7 +142,7 @@ func (s *PostgresStore) CreateUserAccount(user *models.Sellers) (bool, error) {
 func (s *PostgresStore) UpdateUserAccount(user *models.Sellers) (bool, error) {
 	query := `UPDATE sellers SET first_name = $1, last_name = $2, email = $3, password = $4
 	WHERE id = $5`
-	result, err := s.db.Exec(query, user.FirstName, user.LastName, user.Email, user.Password, user.ID)
+	result, err := s.DB.Exec(query, user.FirstName, user.LastName, user.Email, user.Password, user.ID)
 	if err != nil {
 		log.Printf("err updating user: %v", err)
 		return false, err
@@ -161,7 +161,7 @@ func (s *PostgresStore) UpdateUserAccount(user *models.Sellers) (bool, error) {
 
 func (s *PostgresStore) GetUserAccountByEmail(email string) (*models.Sellers, error) {
 	query := `SELECT id, user_id, first_name, last_name, email, password, created_at FROM sellers WHERE email = $1`
-	row := s.db.QueryRow(query, email)
+	row := s.DB.QueryRow(query, email)
 	var user models.Sellers
 	err := row.Scan(&user.ID, &user.UserID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.CreatedAt)
 	if err != nil {
@@ -176,7 +176,7 @@ func (s *PostgresStore) GetUserAccountByEmail(email string) (*models.Sellers, er
 
 func (s *PostgresStore) GetUserAccountById(id int) (*models.Sellers, error) {
 	query := `SELECT id, user_id, first_name, last_name, email, password, created_at FROM sellers WHERE id = $1`
-	row := s.db.QueryRow(query, id)
+	row := s.DB.QueryRow(query, id)
 	var user models.Sellers
 	err := row.Scan(&user.ID, &user.UserID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.CreatedAt)
 	if err != nil {
@@ -191,7 +191,7 @@ func (s *PostgresStore) GetUserAccountById(id int) (*models.Sellers, error) {
 
 func (s *PostgresStore) GetUserAccountByUserID(userID string) (*models.Sellers, error) {
 	query := `SELECT id, user_id, first_name, last_name, email, password, created_at FROM sellers WHERE user_id = $1`
-	row := s.db.QueryRow(query, userID)
+	row := s.DB.QueryRow(query, userID)
 	var user models.Sellers
 	err := row.Scan(&user.ID, &user.UserID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.CreatedAt)
 	if err != nil {
@@ -209,7 +209,7 @@ func (s *PostgresStore) AddItem(item *models.Goods, user *models.Sellers) (bool,
 	INSERT INTO goods (product_id, name, quantity, max_threshold, min_threshold, created_by)
 	VALUES ($1, $2, $3, $4, $5, $6)`
 
-	result, err := s.db.Exec(
+	result, err := s.DB.Exec(
 		query,
 		item.ProductID,
 		item.Name,
@@ -237,7 +237,7 @@ func (s *PostgresStore) AddItem(item *models.Goods, user *models.Sellers) (bool,
 func (s *PostgresStore) GetItemByProductID(productID string) (*models.Goods, error) {
 	query := `SELECT id, product_id, name, quantity, max_threshold, min_threshold, created_by
 	          FROM goods WHERE product_id = $1`
-	row := s.db.QueryRow(query, productID)
+	row := s.DB.QueryRow(query, productID)
 
 	var item models.Goods
 	err := row.Scan(
@@ -265,7 +265,7 @@ func (s *PostgresStore) GetAllItem() ([]*models.Goods, error) {
 	)
 	item := new(models.Goods)
 	query := `SELECT * from goods`
-	rows, err := s.db.Query(query)
+	rows, err := s.DB.Query(query)
 	if err != nil {
 		log.Printf("err: %v", err)
 		return nil, err
@@ -294,7 +294,7 @@ func (s *PostgresStore) GetAllItem() ([]*models.Goods, error) {
 func (s *PostgresStore) UpdateItem(item *models.Goods, user *models.Sellers) (bool, error) {
 	query := `UPDATE goods SET name = $1, quantity = $2, max_threshold = $3
 	WHERE id = $4 AND created_by = $5`
-	result, err := s.db.Exec(query, item.Name, item.Quantity, item.MaxThreshold, item.ID, user.ID)
+	result, err := s.DB.Exec(query, item.Name, item.Quantity, item.MaxThreshold, item.ID, user.ID)
 	if err != nil {
 		log.Printf("Error updating item: %v", err)
 		return false, err
@@ -316,7 +316,7 @@ func (s *PostgresStore) UpdateItem(item *models.Goods, user *models.Sellers) (bo
 
 func (s *PostgresStore) SetItemMaxThreshold(item *models.Goods, user *models.Sellers) (bool, error) {
 	query := `UPDATE goods SET max_threshold = $1 WHERE product_id = $2 AND created_by = $3`
-	result, err := s.db.Exec(query, item.MaxThreshold, item.ID, user.ID)
+	result, err := s.DB.Exec(query, item.MaxThreshold, item.ID, user.ID)
 	if err != nil {
 		log.Printf("Error setting item max threshold: %v", err)
 		return false, err
@@ -337,7 +337,7 @@ func (s *PostgresStore) SetItemMaxThreshold(item *models.Goods, user *models.Sel
 
 func (s *PostgresStore) GetItemById(id int) (*models.Goods, error) {
 	query := `SELECT id, product_id, name, quantity, max_threshold, min_threshold, created_by FROM goods WHERE id = $1`
-	row := s.db.QueryRow(query, id)
+	row := s.DB.QueryRow(query, id)
 	var item models.Goods
 	err := row.Scan(&item.ID, &item.Name, &item.Quantity, &item.MaxThreshold, &item.CreatedBy)
 	if err != nil {
@@ -352,7 +352,7 @@ func (s *PostgresStore) GetItemById(id int) (*models.Goods, error) {
 
 func (s *PostgresStore) AddItemToInventory(productID string, quantity int) (bool, error) {
 	query := `UPDATE goods SET quantity = quantity + $1 WHERE product_id = $2 AND quantity + $1 <= max_threshold`
-	result, err := s.db.Exec(query, quantity, productID)
+	result, err := s.DB.Exec(query, quantity, productID)
 	if err != nil {
 		log.Printf("Error adding quantity: %v", err)
 		return false, err
@@ -372,7 +372,7 @@ func (s *PostgresStore) AddItemToInventory(productID string, quantity int) (bool
 
 func (s *PostgresStore) RemoveItemFromInventory(productID string, quantity int) (bool, error) {
 	query := `UPDATE goods SET quantity = quantity - $1 WHERE product_id = $2 AND quantity - $1 >= min_threshold`
-	result, err := s.db.Exec(query, quantity, productID)
+	result, err := s.DB.Exec(query, quantity, productID)
 	if err != nil {
 		log.Printf("Error removing quantity: %v", err)
 		return false, err
@@ -394,7 +394,7 @@ func (s *PostgresStore) GetLowStockProducts() ([]*models.ItemUser, error) {
 	query := `
 	SELECT g.id, g.product_id, g.name, g.quantity, g.max_threshold, g.min_threshold, g.created_by, s.first_name, s.email FROM goods g INNER JOIN sellers s ON g.created_by = s.id WHERE g.quantity <= g.min_threshold OR g.quantity <= g.min_threshold + 0.1 * g.min_threshold;`
 
-	rows, err := s.db.Query(query)
+	rows, err := s.DB.Query(query)
 	if err != nil {
 		log.Printf("Error querying low stock products: %v", err)
 		return nil, err
