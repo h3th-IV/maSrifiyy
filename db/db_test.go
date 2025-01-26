@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/maSrifiyy/db"
@@ -137,4 +138,41 @@ func TestAddItem(t *testing.T) {
 		err = mockDB.ExpectationsWereMet()
 		require.NoError(t, err)
 	})
+}
+
+// this try to fetch item from the db good/user
+func TestGetItemFromDB(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		UserID         string
+		mockSetup      func()
+		expectedResult *models.Sellers
+		expectedErr    error
+	}{
+		{
+			desc:   "user fetched successfully",
+			UserID: "usr-12ee34c-e8hf9023-29092h2e",
+			mockSetup: func() {
+				createdAt := time.Date(2025, 1, 25, 10, 0, 0, 0, time.UTC)
+				rows := sqlmock.NewRows([]string{
+					"id", "user_id", "first_name", "last_name", "email", "password", "created_at"}).AddRow(1, "usr-1903ds0390-290de02e00-028e0020", "Thread", "Miller", "threadmiller@clother.com", "epwe9032jiwdj0i2je10e18e01ewjidq30eiwdq0212`w1e2wij03d23", createdAt)
+				mockDB.ExpectQuery("SELECT id, user_id, first_name, last_name, email, password, created_at FROM sellers WHERE user_id = \\$1").WithArgs("usr-12ee34c-e8hf9023-29092h2e").WillReturnRows(rows)
+			},
+			expectedResult: &models.Sellers{
+				CreatedAt: time.Now(),
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			//call mock function
+			tc.mockSetup()
+
+			seller, err := store.GetUserAccountByUserID(tc.UserID)
+			require.IsType(t, tc.expectedResult, seller)
+			require.NoError(t, err)
+		})
+	}
 }
