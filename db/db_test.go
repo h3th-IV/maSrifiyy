@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -10,16 +11,40 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateSellerAccount(t *testing.T) {
-	//create mock
-	mockDB, mock, err := sqlmock.New()
+var (
+	mockDB sqlmock.Sqlmock
+	store  *db.PostgresStore
+)
+
+// setupTestDB initializes the mock database and store.
+func setupTestDB(t *testing.T) {
+	var dbMock *sql.DB
+	var err error
+
+	dbMock, mockDB, err = sqlmock.New()
 	if err != nil {
-		t.Fatalf("error intializing mock db: %v", err)
+		t.Fatalf("error initializing mock db: %v", err)
 	}
-	defer mockDB.Close()
 
-	store := &db.PostgresStore{DB: mockDB}
+	store = &db.PostgresStore{DB: dbMock}
+}
 
+func cleanupTestDB() {
+	if store != nil {
+		_ = store.DB.Close()
+	}
+}
+
+// TestMain runs before any tests are executed.
+func TestMain(m *testing.M) {
+	// Run setup before all tests
+	setupTestDB(nil)
+	defer cleanupTestDB()
+
+	m.Run()
+}
+
+func TestCreateSellerAccount(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		user           *models.Sellers
@@ -37,7 +62,7 @@ func TestCreateSellerAccount(t *testing.T) {
 				Password:  "!pAssw0rd",
 			},
 			mockSetup: func() {
-				mock.ExpectExec("INSERT INTO sellers").
+				mockDB.ExpectExec("INSERT INTO sellers").
 					WithArgs(
 						sqlmock.AnyArg(),
 						"Thread",
@@ -60,9 +85,9 @@ func TestCreateSellerAccount(t *testing.T) {
 				Password:  "securepassword",
 			},
 			mockSetup: func() {
-				mock.ExpectExec("INSERT INTO sellers").
+				mockDB.ExpectExec("INSERT INTO sellers").
 					WithArgs(
-						sqlmock.AnyArg(), //"usr-21AxH90-360e460-00002",
+						sqlmock.AnyArg(),
 						"Sew",
 						"Wearer",
 						"sewWearer@wool.com",
@@ -84,8 +109,32 @@ func TestCreateSellerAccount(t *testing.T) {
 			require.Equal(t, tc.expectedResult, res)
 			require.Equal(t, tc.expectedErr, err)
 
-			err = mock.ExpectationsWereMet()
+			err = mockDB.ExpectationsWereMet()
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestAddItem(t *testing.T) {
+	t.Run("Add Item Success", func(t *testing.T) {
+		mockDB.ExpectExec("INSERT INTO goods").
+			WithArgs("prd-ew783rrow", "hp Omen 16pro", 10, 100, 10, 3).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		res, err := store.AddItem(&models.Goods{
+			ProductID:    "prd-ew783rrow",
+			Name:         "hp Omen 16pro",
+			Quantity:     10,
+			MaxThreshold: 100,
+			MinThreshold: 10,
+		}, &models.Sellers{
+			ID: 3,
+		})
+
+		require.True(t, res)
+		require.NoError(t, err)
+
+		err = mockDB.ExpectationsWereMet()
+		require.NoError(t, err)
+	})
 }
