@@ -39,13 +39,13 @@ func NewAPIServer(listenAddr string, store db.Storage) *APIServer {
 func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/acct", makeHTTPHandleFunc(s.handleAcct))
-	router.HandleFunc("/create", makeHTTPHandleFunc(s.handleCreateAcct))
-	router.HandleFunc("/login", makeHTTPHandleFunc(s.Login))
-	router.HandleFunc("/add-item", makeHTTPHandleFunc(s.handleAddItemToInventory))
-	router.HandleFunc("/update-inventory", makeHTTPHandleFunc(s.updateItem))
-	router.HandleFunc("/get-items", makeHTTPHandleFunc(s.GetAllItems))
-	router.HandleFunc("/get-product/{productId}", makeHTTPHandleFunc(s.GetItemByProductID))
+	router.HandleFunc("/acct", MakeHTTPHandleFunc(s.handleAcct))
+	router.HandleFunc("/create", MakeHTTPHandleFunc(s.HandleCreateAcct))
+	router.HandleFunc("/login", MakeHTTPHandleFunc(s.Login))
+	router.HandleFunc("/add-item", MakeHTTPHandleFunc(s.handleAddItemToInventory))
+	router.HandleFunc("/update-inventory", MakeHTTPHandleFunc(s.updateItem))
+	router.HandleFunc("/get-items", MakeHTTPHandleFunc(s.GetAllItems))
+	router.HandleFunc("/get-product/{productId}", MakeHTTPHandleFunc(s.GetItemByProductID))
 
 	log.Println("json http server running on port :3000")
 	http.ListenAndServe(s.listenAddr, router)
@@ -59,7 +59,7 @@ func (s *APIServer) handleGetAcct(w http.ResponseWriter, r *http.Request) error 
 	return writeJSON(w, http.StatusOK, &models.Sellers{})
 }
 
-func (s *APIServer) handleCreateAcct(w http.ResponseWriter, r *http.Request) error {
+func (s *APIServer) HandleCreateAcct(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return fmt.Errorf("Method not allowed")
 	}
@@ -82,6 +82,7 @@ func (s *APIServer) handleCreateAcct(w http.ResponseWriter, r *http.Request) err
 
 func (s *APIServer) Login(w http.ResponseWriter, r *http.Request) error {
 	login := new(models.Login) //return login pointer
+	defer r.Body.Close()
 	err := json.NewDecoder(r.Body).Decode(login)
 	if err != nil {
 		return err
@@ -145,6 +146,7 @@ func (s *APIServer) handleAddItemToInventory(w http.ResponseWriter, r *http.Requ
 	if err := json.NewDecoder(r.Body).Decode(item); err != nil {
 		return writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request payload"})
 	}
+	defer r.Body.Close()
 
 	newItem := models.NewGood(item.Name, item.Quantity, item.MaxThreshold)
 	success, err := s.Storage.AddItem(newItem, user)
@@ -202,6 +204,8 @@ func (s *APIServer) updateItem(w http.ResponseWriter, r *http.Request) error {
 		return writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request payload"})
 	}
 
+	defer r.Body.Close()
+
 	item, err := s.Storage.GetItemByProductID(payload.ProductID)
 	if err != nil {
 		return writeJSON(w, http.StatusNotFound, map[string]string{"error": "item not found"})
@@ -247,6 +251,9 @@ func (s *APIServer) GetAllItems(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) GetItemByProductID(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return fmt.Errorf("method not allowed")
+	}
 	vars := mux.Vars(r)
 	productId := vars["productId"]
 	item, err := s.Storage.GetItemByProductID(productId)
@@ -259,7 +266,7 @@ func (s *APIServer) GetItemByProductID(w http.ResponseWriter, r *http.Request) e
 
 type APIFunc func(http.ResponseWriter, *http.Request) error
 
-func makeHTTPHandleFunc(f APIFunc) http.HandlerFunc {
+func MakeHTTPHandleFunc(f APIFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := f(w, r); err != nil {
 			writeJSON(w, http.StatusBadRequest, APIError{Error: err.Error()})

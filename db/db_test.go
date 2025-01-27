@@ -176,3 +176,15 @@ func TestGetItemFromDB(t *testing.T) {
 		})
 	}
 }
+
+// db update ops test
+func TestUpdateUser(t *testing.T) {
+	t.Run("Update db op", func(t *testing.T) {
+		mockDB.ExpectExec("UPDATE goods SET").WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+
+		res, err := store.UpdateItem(&models.Goods{ID: 2}, &models.Sellers{ID: 2})
+
+		require.True(t, res)
+		require.NoError(t, err)
+	})
+}
