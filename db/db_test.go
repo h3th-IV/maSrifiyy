@@ -105,7 +105,7 @@ func TestCreateSellerAccount(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.mockSetup()
 
-			res, err := store.CreateUserAccount(tc.user)
+			res, err := store.CreateUserAccount(tc.user.UserID, tc.user.FirstName, tc.user.LastName, tc.user.Email, tc.user.Password)
 
 			require.Equal(t, tc.expectedResult, res)
 			require.Equal(t, tc.expectedErr, err)
@@ -122,15 +122,7 @@ func TestAddItem(t *testing.T) {
 			WithArgs("prd-ew783rrow", "hp Omen 16pro", 10, 100, 10, 3).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		res, err := store.AddItem(&models.Goods{
-			ProductID:    "prd-ew783rrow",
-			Name:         "hp Omen 16pro",
-			Quantity:     10,
-			MaxThreshold: 100,
-			MinThreshold: 10,
-		}, &models.Sellers{
-			ID: 3,
-		})
+		res, err := store.AddItem("prd-ew783rrow", "hp Omen 16pro", 10, 100, 10, 3)
 
 		require.True(t, res)
 		require.NoError(t, err)

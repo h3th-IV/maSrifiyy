@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/maSrifiyy/business"
 	"github.com/maSrifiyy/db"
 	"github.com/maSrifiyy/models"
 	"github.com/maSrifiyy/utils"
@@ -73,10 +74,7 @@ func (s *APIServer) HandleCreateAcct(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 	acctReq.Password = string(pass_hash)
-	newAcct := models.NewUser(acctReq.FirstName, acctReq.LAstName, acctReq.Email, acctReq.Password)
-	if _, err := s.Storage.CreateUserAccount(newAcct); err != nil {
-		return err
-	}
+	newAcct, err := business.CreateSellerAccount(acctReq)
 	return writeJSON(w, http.StatusOK, newAcct)
 }
 
@@ -148,22 +146,15 @@ func (s *APIServer) handleAddItemToInventory(w http.ResponseWriter, r *http.Requ
 	}
 	defer r.Body.Close()
 
-	newItem := models.NewGood(item.Name, item.Quantity, item.MaxThreshold)
-	success, err := s.Storage.AddItem(newItem, user)
-	if err != nil || !success {
-		log.Printf("err: %v", err)
-		return writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to add item to inventory"})
-	}
-
-	addedItem, err := s.Storage.GetItemByProductID(newItem.ProductID)
+	newItem, err := business.AddNewItemToInventory(item, user.ID)
 	if err != nil {
-		log.Printf("Error retrieving added item: %v", err)
+		log.Printf("Error creating new item: %v", err)
 		return writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to retrieve added item"})
 	}
 
 	res := map[string]interface{}{}
 	res["message"] = "Item added successfully"
-	res["item"] = addedItem
+	res["item"] = newItem
 	return writeJSON(w, http.StatusOK, res)
 }
 

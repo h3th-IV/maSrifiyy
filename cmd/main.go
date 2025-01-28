@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/maSrifiyy/api"
+	"github.com/maSrifiyy/business"
 	"github.com/maSrifiyy/db"
 	"github.com/robfig/cron/v3"
 )
@@ -16,7 +17,7 @@ func main() {
 	}
 	croner := cron.New()
 	croner.AddFunc("0 8 * * *", func() {
-		err := store.SentThresholdNotification()
+		err := business.SendThresholdNotification()
 		if err != nil {
 			log.Printf("Error running threshold notification: %v", err)
 		}

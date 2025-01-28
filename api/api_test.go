@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/maSrifiyy/api"
+	"github.com/maSrifiyy/business"
 	"github.com/maSrifiyy/models"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,7 @@ func TestHandleCreateAcct(t *testing.T) {
 
 	t.Run("Seller Account creation", func(t *testing.T) {
 
-		reqBody := models.NewUser("Thread", "Miller", "threadmiller@wooler.com", "!p@ssw0rd")
+		reqBody := business.NewUser("Thread", "Miller", "threadmiller@wooler.com", "!p@ssw0rd")
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(reqBody.Password), 8)
 		reqBody.Password = string(hashedPassword)
 		//mock
@@ -74,8 +75,8 @@ func TestGetItemByProductId(t *testing.T) {
 	})
 }
 
-func (m *MockStorage) CreateUserAccount(user *models.Sellers) (bool, error) {
-	args := m.Called(user)
+func (m *MockStorage) CreateUserAccount(userID, firstName, lastName, email, password string) (bool, error) {
+	args := m.Called(userID, firstName, lastName, email, password)
 	log.Println(args...)
 	return args.Bool(0), args.Error(1)
 }
@@ -90,9 +91,9 @@ func (m *MockStorage) CreateGoodsTable() error {
 	return args.Error(0)
 }
 
-func (m *MockStorage) UpdateUserAccount(user *models.Sellers) (bool, error) {
-	args := m.Called(user)
-	return args.Bool(0), args.Error(1)
+func (m *MockStorage) UpdateUserAccount(firstName, lastName, email, password string, id int) (*models.Sellers, error) {
+	args := m.Called(firstName, lastName, email, password, id)
+	return &models.Sellers{}, args.Error(1)
 }
 
 func (m *MockStorage) GetUserAccountById(id int) (*models.Sellers, error) {
@@ -110,8 +111,8 @@ func (m *MockStorage) GetUserAccountByEmail(email string) (*models.Sellers, erro
 	return args.Get(0).(*models.Sellers), args.Error(1)
 }
 
-func (m *MockStorage) AddItem(item *models.Goods, seller *models.Sellers) (bool, error) {
-	args := m.Called(item, seller)
+func (m *MockStorage) AddItem(productID, name string, quantity, maxThreshold, minThreshold, id int) (bool, error) {
+	args := m.Called(productID, name, quantity, maxThreshold, minThreshold, id)
 	return args.Bool(0), args.Error(1)
 }
 
